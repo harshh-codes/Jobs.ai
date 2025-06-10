@@ -1,0 +1,9 @@
+langchain
+wikipedia
+langchain-community
+python-dotenv
+pydantic
+google-generativeai
+duckduckgo-search
+langchain-google-genai
+PyMuPDF
