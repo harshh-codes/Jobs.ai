@@ -16,12 +16,12 @@ def extract_email_from_resume(text: str) -> str:
     return match.group(0) if match else "unknown@example.com"
 
 # ✅ Extract name from resume (first line heuristic)
-def extract_name_from_resume(text: str) -> str:
-    for line in text.splitlines():
-        line = line.strip()
-        if line and all(word.istitle() for word in line.split() if word.isalpha()):
-            return line
-    return "Candidate"
+# def extract_name_from_resume(text: str) -> str:
+#     for line in text.splitlines():
+#         line = line.strip()
+#         if line and all(word.istitle() for word in line.split() if word.isalpha()):
+#             return line
+#     return "Candidate"
 
 # ✅ Send email only if score >= 5
 def send_match_email(resume_text: str,candidate_name: str, match_score: int):
@@ -30,7 +30,7 @@ def send_match_email(resume_text: str,candidate_name: str, match_score: int):
         return
 
     to_email = extract_email_from_resume(resume_text)
-    candidate_name = extract_name_from_resume(resume_text)
+    # candidate_name = extract_name_from_resume(resume_text)
 
     subject = "You're a great match for the job!"
     body = f"""
