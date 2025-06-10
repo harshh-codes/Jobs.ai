@@ -1,21 +1,52 @@
-from agents.job_matcher import run_job_matcher  # Adjust path as per your project structure
+import json
+import re
+from agents.cv_parser import run_cv_parser
+from agents.job_matcher import run_job_matcher, extract_text_from_pdf
+from agents.email_agent import send_match_email
 
 def main():
-    # Path to the resume PDF
-    resume_pdf_path = "Harsh Resume.pdf"  # <-- Replace with your actual path
+    resume_path = "Harsh Resume.pdf"
+    job_path = "job_description.txt"
 
-    # Path to the job description .txt file
-    job_description_file = "job_description.txt"  # <-- Replace with your actual file
+    # Read job description text
+    with open(job_path, "r", encoding="utf-8") as f:
+        job_description = f.read()
 
-    # Read job description from the text file
-    with open(job_description_file, 'r', encoding='utf-8') as file:
-        job_description = file.read()
+    # Extract resume info
+    parsed_cv = run_cv_parser(resume_path)
+    candidate_name = parsed_cv.get('Name', 'Candidate')  # Use fallback
+    resume_text = extract_text_from_pdf(resume_path)
 
-    # Run the matcher agent
-    match_report = run_job_matcher(resume_pdf_path, job_description)
+    # Run job matcher agent
+    raw_report = run_job_matcher(resume_path, job_description)
+    raw_output = raw_report.get("output", "")
 
-    # Print the match report
-    print("\nMatch Report:\n", match_report)
+    # ✅ Strip markdown formatting like ```json ... ```
+    cleaned_output = re.sub(r"^```json\s*|\s*```$", "", raw_output.strip())
+
+    # ✅ Safely handle empty or invalid JSON output
+    if not cleaned_output:
+        print("❌ ERROR: Job matcher output is empty or improperly formatted.")
+        return
+
+    try:
+        match_report = json.loads(cleaned_output)
+    except json.JSONDecodeError as e:
+        print("❌ JSON Decode Error:", str(e))
+        print("Raw cleaned output was:", repr(cleaned_output))
+        return
+
+    # Access values safely
+    match_score = match_report.get('Overall_Match_Score', 0)
+
+    # Print to console
+    print(f"\nCandidate: {candidate_name}")
+    print(f"Match Score: {match_score}/10")
+    print("Skill Match:", match_report.get('Skill_Match', []))
+    print("Missing Skills:", match_report.get('Missing_Skills', []))
+
+    # Send email
+    send_match_email(resume_text, candidate_name, match_score)
 
 if __name__ == "__main__":
     main()
